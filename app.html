@@ -1,0 +1,2700 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swayam Proctor — Live Exam Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #f4f4f6;
+            color: #18181b;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d4d4d8;
+            border-radius: 99px;
+        }
+
+        /* Animations */
+        @keyframes pulse-g {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, .45)
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(34, 197, 94, 0)
+            }
+        }
+
+        @keyframes pulse-r {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, .5)
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(239, 68, 68, 0)
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        @keyframes logIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        @keyframes vflash {
+
+            0%,
+            100% {
+                opacity: .92
+            }
+
+            50% {
+                opacity: 1
+            }
+        }
+
+        /* ---------- MEDIA TOGGLE BUTTONS ---------- */
+        .btn-media {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 9px;
+            font-size: .8125rem;
+            font-weight: 600;
+            padding: 9px 16px;
+            cursor: pointer;
+            transition: all .15s;
+            font-family: 'Inter', sans-serif;
+            border: none;
+        }
+
+        /* OFF state — grey */
+        .btn-media.off {
+            background: #f4f4f5;
+            color: #71717a;
+            border: 1px solid #e4e4e7;
+        }
+
+        .btn-media.off:hover {
+            background: #e4e4e7;
+            color: #18181b;
+        }
+
+        /* ON state — coloured */
+        .btn-media.on {
+            border: 1px solid transparent;
+        }
+
+        .btn-media-cam.on {
+            background: #dcfce7;
+            color: #15803d;
+            border-color: #86efac;
+        }
+
+        .btn-media-cam.on:hover {
+            background: #bbf7d0;
+        }
+
+        .btn-media-mic.on {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border-color: #93c5fd;
+        }
+
+        .btn-media-mic.on:hover {
+            background: #bfdbfe;
+        }
+
+        .media-sep {
+            width: 1px;
+            height: 22px;
+            background: #e4e4e7;
+            margin: 0 4px;
+        }
+
+        .anim-pulse-g {
+            animation: pulse-g 2s ease infinite;
+        }
+
+        .anim-pulse-r {
+            animation: pulse-r 1.5s ease infinite;
+        }
+
+        .anim-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        .anim-log {
+            animation: logIn .2s ease-out;
+        }
+
+        /* ---------- LAYOUT HELPERS ---------- */
+        .page {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .page-full {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+        }
+
+        .col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .between {
+            justify-content: space-between;
+        }
+
+        .wrap {
+            flex-wrap: wrap;
+        }
+
+        .flex1 {
+            flex: 1;
+        }
+
+        .min0 {
+            min-height: 0;
+            min-width: 0;
+        }
+
+        .rel {
+            position: relative;
+        }
+
+        .abs {
+            position: absolute;
+        }
+
+        .inset {
+            inset: 0;
+        }
+
+        .overflow-y {
+            overflow-y: auto;
+        }
+
+        .overflow-h {
+            overflow: hidden;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .shrink0 {
+            flex-shrink: 0;
+        }
+
+        .gap2 {
+            gap: 8px;
+        }
+
+        .gap3 {
+            gap: 12px;
+        }
+
+        .gap4 {
+            gap: 16px;
+        }
+
+        .gap5 {
+            gap: 20px;
+        }
+
+        .w100 {
+            width: 100%;
+        }
+
+        /* ---------- TYPOGRAPHY ---------- */
+        .fs10 {
+            font-size: .625rem;
+        }
+
+        .fs11 {
+            font-size: .6875rem;
+        }
+
+        .fs12 {
+            font-size: .75rem;
+        }
+
+        .fs13 {
+            font-size: .8125rem;
+        }
+
+        .fs14 {
+            font-size: .875rem;
+        }
+
+        .fw5 {
+            font-weight: 500;
+        }
+
+        .fw6 {
+            font-weight: 600;
+        }
+
+        .fw7 {
+            font-weight: 700;
+        }
+
+        .fw8 {
+            font-weight: 800;
+        }
+
+        .fw9 {
+            font-weight: 900;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ---------- COMMON CARDS ---------- */
+        .card {
+            background: #fff;
+            border: 1px solid #e4e4e7;
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+            overflow: hidden;
+        }
+
+        .card-hd {
+            padding: 14px 20px;
+            border-bottom: 1px solid #f4f4f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: .875rem;
+            font-weight: 700;
+            color: #18181b;
+        }
+
+        .card-title i {
+            font-size: 16px;
+            color: #71717a;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* ---------- DIVIDER ---------- */
+        .divider {
+            border: none;
+            border-top: 1px solid #f4f4f5;
+            margin: 20px 0;
+        }
+
+        /* ---------- NAV ---------- */
+        .nav {
+            background: #fff;
+            border-bottom: 1px solid #e4e4e7;
+            padding: 14px 24px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-icon {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 9px;
+            border-radius: 10px;
+            display: flex;
+        }
+
+        .nav-icon i {
+            font-size: 18px;
+            color: #2563eb;
+        }
+
+        .nav-title {
+            font-size: .9rem;
+            font-weight: 700;
+            color: #18181b;
+        }
+
+        .nav-sub {
+            font-size: .68rem;
+            color: #a1a1aa;
+            font-weight: 500;
+        }
+
+        .sys-badge {
+            background: #f9fafb;
+            border: 1px solid #e4e4e7;
+            color: #71717a;
+            padding: 5px 12px;
+            border-radius: 99px;
+            font-size: .72rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ---------- BUTTONS ---------- */
+        button {
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all .15s;
+            outline: none;
+            border: none;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 9px;
+            font-size: .8125rem;
+            font-weight: 600;
+            padding: 10px 18px;
+        }
+
+        .btn i {
+            font-size: 13px;
+        }
+
+        .btn-green {
+            background: #16a34a;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(22, 163, 74, .25);
+        }
+
+        .btn-green:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .btn-dark {
+            background: #09090b;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .btn-dark:hover {
+            background: #27272a;
+        }
+
+        .btn-amber {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .btn-amber:hover {
+            background: #fde68a;
+        }
+
+        .btn-red {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .btn-red:hover {
+            background: #fee2e2;
+        }
+
+        .btn-ghost {
+            background: #f4f4f5;
+            color: #52525b;
+            border: 1px solid #e4e4e7;
+        }
+
+        .btn-ghost:hover {
+            background: #e4e4e7;
+            color: #18181b;
+        }
+
+        .btn-ghost:disabled {
+            opacity: .35;
+            pointer-events: none;
+        }
+
+        .btn-indigo {
+            background: #6366f1;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, .3);
+        }
+
+        .btn-indigo:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+        }
+
+        .btn-emerald {
+            background: #10b981;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, .3);
+        }
+
+        .btn-emerald:hover {
+            background: #059669;
+        }
+
+        /* ---------- INPUTS ---------- */
+        .input {
+            width: 100%;
+            border: 1px solid #e4e4e7;
+            border-radius: 9px;
+            padding: 11px 15px;
+            font-size: .875rem;
+            font-family: 'Inter', sans-serif;
+            color: #18181b;
+            background: #fafafa;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .input:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, .12);
+        }
+
+        .input::placeholder {
+            color: #a1a1aa;
+        }
+
+        textarea.input {
+            resize: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .78rem;
+            line-height: 1.75;
+        }
+
+        .input-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .75rem;
+            color: #52525b;
+        }
+
+        .label {
+            display: block;
+            font-size: .72rem;
+            font-weight: 600;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            margin-bottom: 8px;
+        }
+
+        /* ---------- ADMIN CONFIG ---------- */
+        .config-wrap {
+            max-width: 740px;
+            margin: 0 auto;
+            padding: 32px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .config-hero {
+            background: #fff;
+            border: 1px solid #e4e4e7;
+            border-radius: 14px;
+            padding: 28px;
+        }
+
+        .config-hero h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #09090b;
+            letter-spacing: -.025em;
+            margin-bottom: 6px;
+        }
+
+        .config-hero p {
+            font-size: .875rem;
+            color: #71717a;
+            line-height: 1.6;
+        }
+
+        .config-hero code {
+            background: #f4f4f5;
+            border: 1px solid #e4e4e7;
+            color: #6366f1;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .75em;
+        }
+
+        .share-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .share-box-hd {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .share-box-icon {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            padding: 9px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            display: flex;
+        }
+
+        .share-box-icon i {
+            font-size: 18px;
+            color: #16a34a;
+        }
+
+        .share-box-title {
+            font-size: .9rem;
+            font-weight: 700;
+            color: #14532d;
+            margin-bottom: 3px;
+        }
+
+        .share-box-sub {
+            font-size: .78rem;
+            color: #16a34a;
+        }
+
+        .share-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .share-row input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* ---------- DASHBOARD HEADER ---------- */
+        .dash-hd {
+            background: #fff;
+            border: 1px solid #e4e4e7;
+            border-radius: 14px;
+            padding: 16px 22px;
+            margin: 20px 20px 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .dash-icon {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 9px;
+            border-radius: 10px;
+            display: flex;
+        }
+
+        .dash-icon i {
+            font-size: 18px;
+            color: #2563eb;
+        }
+
+        .dash-title {
+            font-size: .9375rem;
+            font-weight: 800;
+            color: #09090b;
+            letter-spacing: -.01em;
+        }
+
+        .dash-live {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: .75rem;
+            font-weight: 600;
+            color: #16a34a;
+            margin-top: 3px;
+        }
+
+        /* ---------- LIVE GRID ---------- */
+        .live-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            padding: 20px;
+        }
+
+        @media(min-width:1024px) {
+            .live-grid {
+                grid-template-columns: 3fr 2fr;
+            }
+        }
+
+        /* ---------- VIDEO ---------- */
+        .video-stage {
+            background: #0f1117;
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-stage video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+
+        .vp-wrap {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .vp-box {
+            background: rgba(39, 39, 42, .9);
+            border: 1px solid #3f3f46;
+            border-radius: 16px;
+            padding: 28px 32px;
+            text-align: center;
+        }
+
+        .vp-box i {
+            font-size: 40px;
+            color: #71717a;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .vp-title {
+            font-size: .875rem;
+            font-weight: 600;
+            color: #d4d4d8;
+        }
+
+        .vp-sub {
+            font-size: .75rem;
+            color: #71717a;
+            max-width: 260px;
+            line-height: 1.55;
+            margin-top: 6px;
+        }
+
+        .rec-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 5;
+            background: rgba(0, 0, 0, .7);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 8px;
+            padding: 5px 11px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .rec-badge span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .65rem;
+            color: #d4d4d8;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        .v-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #ef4444;
+            flex-shrink: 0;
+        }
+
+        .violation-popup {
+            position: absolute;
+            inset: 0;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .vp-card-alert {
+            background: #fff;
+            border: 1px solid #e4e4e7;
+            border-radius: 14px;
+            padding: 24px;
+            text-align: center;
+            max-width: 320px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: logIn .2s ease-out;
+        }
+
+        .vp-card-alert .vo-icon {
+            background: #fee2e2;
+            border-radius: 50%;
+            padding: 16px;
+            margin-bottom: 14px;
+            display: inline-flex;
+        }
+
+        .vp-card-alert .vo-icon i {
+            font-size: 36px;
+            color: #ef4444;
+        }
+
+        .vp-card-alert h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #09090b;
+            margin-bottom: 8px;
+            letter-spacing: -.02em;
+        }
+
+        .vp-card-alert p {
+            font-size: .875rem;
+            color: #71717a;
+            line-height: 1.55;
+            margin-bottom: 20px;
+        }
+
+        .video-footer {
+            padding: 12px 18px;
+            background: #fafafa;
+            border-top: 1px solid #f4f4f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: .75rem;
+            font-weight: 600;
+        }
+
+        /* ---------- DOT ---------- */
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+
+        .dot-g {
+            background: #22c55e;
+        }
+
+        .dot-r {
+            background: #ef4444;
+        }
+
+        /* ---------- BADGE ---------- */
+        .badge-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #15803d;
+            border-radius: 99px;
+            padding: 4px 12px;
+            font-size: .68rem;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        .badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .room-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .68rem;
+            color: #a1a1aa;
+            background: #f4f4f5;
+            border: 1px solid #e4e4e7;
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+
+        /* ---------- LEGEND ---------- */
+        .legend {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: .68rem;
+            font-weight: 600;
+            color: #71717a;
+        }
+
+        .leg-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+
+        /* ---------- Q-GRID ---------- */
+        .q-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .q-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .72rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: default;
+            transition: transform .1s, box-shadow .1s;
+            background: #f4f4f5;
+            border: 1px solid #e4e4e7;
+            color: #a1a1aa;
+        }
+
+        .q-cell:hover {
+            transform: scale(1.08);
+        }
+
+        .q-cell.cur {
+            background: #2563eb;
+            border-color: #1d4ed8;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, .35);
+        }
+
+        .q-cell.ans {
+            background: #dcfce7;
+            border-color: #86efac;
+            color: #15803d;
+        }
+
+        .prog-text {
+            font-size: .78rem;
+            color: #71717a;
+            font-weight: 500;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #f4f4f5;
+        }
+
+        /* ---------- SCORE ROW ---------- */
+        .score-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .score-big {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: #09090b;
+        }
+
+        .score-pill {
+            font-size: .7rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 99px;
+        }
+
+        .pill-g {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #86efac;
+        }
+
+        .pill-r {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+
+        /* ---------- TERMINAL ---------- */
+        .term-hd {
+            padding: 12px 18px;
+            border-bottom: 1px solid #f4f4f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .term-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: .875rem;
+            font-weight: 700;
+            color: #18181b;
+        }
+
+        .term-title i {
+            font-size: 16px;
+            color: #71717a;
+        }
+
+        .win-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+        }
+
+        .win-r {
+            background: #f87171;
+            border: 1px solid #fca5a5;
+        }
+
+        .win-y {
+            background: #fbbf24;
+            border: 1px solid #fde68a;
+        }
+
+        .win-g {
+            background: #4ade80;
+            border: 1px solid #86efac;
+        }
+
+        .term-canvas {
+            background: #0d1117;
+            overflow-y: auto;
+            padding: 14px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 220px;
+            max-height: 300px;
+            flex: 1;
+        }
+
+        /* ============================================================ */
+        /* CANDIDATE THEME                                              */
+        /* ============================================================ */
+        body.cmode {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .cand-nav {
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .cand-icon {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            padding: 8px;
+            border-radius: 10px;
+            display: flex;
+        }
+
+        .cand-icon i {
+            font-size: 16px;
+            color: #6366f1;
+        }
+
+        .cand-title {
+            font-size: .875rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .cand-sub {
+            font-size: .65rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .cand-status {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            padding: 6px 12px;
+            border-radius: 99px;
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cand-timer {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1e293b;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 7px 14px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .cand-timer i {
+            font-size: 14px;
+            color: #6366f1;
+        }
+
+        .cand-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 16px;
+            background: #f8fafc;
+        }
+
+        .cand-inner {
+            max-width: 680px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-bottom: 40px;
+        }
+
+        .cand-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 28px 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+        }
+
+        .cand-alert {
+            background: rgba(239, 68, 68, .06);
+            border: 1px solid rgba(239, 68, 68, .18);
+            color: #dc2626;
+            border-radius: 8px;
+            padding: 8px 13px;
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .q-lbl {
+            font-size: .7rem;
+            font-weight: 700;
+            color: #6366f1;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            margin-bottom: 14px;
+        }
+
+        .q-txt {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.55;
+            margin-bottom: 22px;
+            letter-spacing: -.01em;
+        }
+
+        .opt {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            transition: all .14s;
+            margin-bottom: 11px;
+        }
+
+        .opt:hover {
+            border-color: #6366f1;
+            background: #eef2ff;
+        }
+
+        .opt.sel {
+            border-color: #6366f1;
+            background: #eef2ff;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
+        }
+
+        .opt-radio {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all .14s;
+        }
+
+        .opt-radio.sel {
+            border-color: #6366f1;
+            background: #6366f1;
+        }
+
+        .opt-radio.sel i {
+            font-size: 11px;
+            color: #fff;
+        }
+
+        .opt-text {
+            font-size: .9375rem;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .opt-text.sel {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .cand-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .progress-track {
+            width: 140px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border-radius: 99px;
+            transition: width .4s ease;
+        }
+
+        /* center screen utility */
+        .center-abs {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .loader-wrap {
+            background: #eef2ff;
+            padding: 22px;
+            border-radius: 50%;
+            display: inline-flex;
+            margin-bottom: 18px;
+        }
+
+        .loader-wrap i {
+            font-size: 34px;
+            color: #6366f1;
+        }
+
+        /* expired card */
+        .exp-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 40px 32px;
+            max-width: 360px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .06);
+        }
+
+        .exp-icon {
+            background: #fef2f2;
+            padding: 22px;
+            border-radius: 50%;
+            display: inline-flex;
+            margin-bottom: 18px;
+        }
+
+        .exp-icon i {
+            font-size: 38px;
+            color: #ef4444;
+        }
+
+        /* score overlay */
+        .score-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .score-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 44px 36px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .08);
+        }
+
+        .si-wrap {
+            padding: 22px;
+            border-radius: 50%;
+            display: inline-flex;
+            margin-bottom: 20px;
+        }
+
+        .si-wrap.green {
+            background: #dcfce7;
+        }
+
+        .si-wrap.red {
+            background: #fee2e2;
+        }
+
+        .si-wrap.amber {
+            background: #fef3c7;
+        }
+
+        .si-wrap i {
+            font-size: 40px;
+        }
+
+        .score-pct-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .score-num {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -.03em;
+        }
+
+        /* lockout */
+        .lockout {
+            position: absolute;
+            inset: 0;
+            z-index: 60;
+            background: rgba(2, 0, 0, .97);
+            backdrop-filter: blur(14px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 32px;
+        }
+
+        .lockout-icon {
+            background: rgba(239, 68, 68, .1);
+            border: 1px solid rgba(239, 68, 68, .25);
+            padding: 28px;
+            border-radius: 50%;
+            margin-bottom: 24px;
+            display: inline-flex;
+        }
+
+        .lockout-icon i {
+            font-size: 56px;
+            color: #ef4444;
+        }
+
+        .lockout-wait {
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 10px;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .78rem;
+            color: #71717a;
+        }
+
+        .lockout-wait i {
+            font-size: 15px;
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ========================================================== -->
+    <!-- SUPABASE — exact variable names preserved                   -->
+    <!-- ========================================================== -->
+    <script>
+        const SUPABASE_URL = 'https://dhkbkakuokeijnhymptm.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_26H9mgC-feJ1A2V8lDlbgQ_jc6OZBP8';
+
+        let supabaseClient;
+        try {
+            // NEVER name this 'supabase' — conflicts with window.supabase CDN global
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.error('Database Error: Failed to initialize Supabase client', e);
+        }
+
+        let examChannel = null, activeExamId = null, peer = null;
+    </script>
+
+    <!-- ========================================================== -->
+    <!-- ADMIN VIEW — starts visible via inline style (no class)     -->
+    <!-- ========================================================== -->
+    <div id="admin-view" style="display:flex; flex-direction:column; min-height:100vh;">
+
+        <!-- Top Nav -->
+        <nav class="nav">
+            <div class="row gap3">
+                <div class="nav-icon"><i class="ph-bold ph-webcam"></i></div>
+                <div>
+                    <div class="nav-title">Swayam Proctor</div>
+                    <div class="nav-sub">Admin Console</div>
+                </div>
+            </div>
+            <div class="sys-badge"><i class="ph ph-database" style="font-size:12px;"></i> Supabase</div>
+        </nav>
+
+        <!-- Config Section -->
+        <main id="admin-config" style="flex:1; overflow-y:auto; background:#f4f4f6;">
+            <div class="config-wrap">
+
+                <!-- Hero -->
+                <div class="config-hero">
+                    <div class="row gap2" style="margin-bottom:10px;">
+                        <div class="dot dot-g anim-pulse-g"></div>
+                        <span
+                            style="font-size:.72rem; font-weight:700; color:#16a34a; text-transform:uppercase; letter-spacing:.08em;">System
+                            Ready</span>
+                    </div>
+                    <h2>Admin Proctoring Dashboard</h2>
+                    <p style="margin-top:6px;">Configure your exam. Add <code>Answer: X</code> at the bottom of each
+                        question block to enable auto-scoring.</p>
+                </div>
+
+                <!-- Form card -->
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="ph ph-sliders"></i> Exam Configuration</div>
+                    </div>
+                    <div class="card-body" style="display:flex; flex-direction:column; gap:20px;">
+                        <div class="row gap3" style="flex-wrap:wrap;">
+                            <div style="flex:1; min-width:180px;">
+                                <label class="label"><i class="ph-fill ph-clock"
+                                        style="font-size:12px; color:#16a34a;"></i> Duration (minutes)</label>
+                                <input type="number" id="exam-duration" value="60" min="1" class="input">
+                            </div>
+                            <div style="flex:1; min-width:200px;">
+                                <label class="label"><i class="ph-fill ph-calendar-plus"
+                                        style="font-size:12px; color:#16a34a;"></i> Scheduled Start Time
+                                    (Optional)</label>
+                                <input type="datetime-local" id="exam-scheduled-time" class="input">
+                            </div>
+                        </div>
+                        <hr class="divider">
+                        <div>
+                            <label class="label"><i class="ph-fill ph-text-aa"
+                                    style="font-size:12px; color:#16a34a;"></i> Raw Question Text</label>
+                            <textarea id="raw-text" class="input" rows="13">1. What is HTML?
+A) HyperText Markup Language
+B) HighText Machine Language
+C) HyperText Markdown Language
+Answer: A
+
+2. Which property changes background color in CSS?
+A) color
+B) bgcolor
+C) background-color
+Answer: C
+
+3. Which tag embeds JavaScript in HTML?
+A) &lt;script&gt;
+B) &lt;js&gt;
+C) &lt;code&gt;
+Answer: A</textarea>
+                        </div>
+                        <button onclick="startAdminExam()" class="btn btn-green" style="align-self:flex-start;">
+                            <i class="ph-bold ph-link" style="font-size:14px;"></i> Process &amp; Generate Room
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Share link (hidden until exam created) -->
+                <div id="share-link-container" style="display:none;">
+                    <div class="share-box">
+                        <div class="share-box-hd">
+                            <div class="share-box-icon"><i class="ph-fill ph-check-circle"></i></div>
+                            <div>
+                                <div class="share-box-title">Room Created Successfully</div>
+                                <div class="share-box-sub">Share the candidate link below. Bookmark the admin link to
+                                    reconnect anytime.</div>
+                            </div>
+                        </div>
+                        <!-- Candidate link -->
+                        <div>
+                            <label class="label" style="margin-bottom:6px;"><i class="ph-fill ph-student"
+                                    style="color:#6366f1;font-size:12px;"></i> Candidate Link</label>
+                            <div class="share-row">
+                                <input type="text" id="shareable-url" readonly class="input input-mono">
+                                <button onclick="copyAdminLink()" class="btn btn-ghost"><i class="ph-bold ph-copy"></i>
+                                    Copy</button>
+                                <button onclick="enterLiveDashboard()" class="btn btn-dark"><i
+                                        class="ph-bold ph-monitor"></i> Open Monitor</button>
+                            </div>
+                        </div>
+                        <!-- Admin monitor link -->
+                        <div>
+                            <label class="label" style="margin-bottom:6px;"><i class="ph-fill ph-shield-check"
+                                    style="color:#16a34a;font-size:12px;"></i> Admin Monitor Link (bookmark
+                                this!)</label>
+                            <div class="share-row">
+                                <input type="text" id="admin-monitor-url" readonly class="input input-mono"
+                                    style="background:#f0fdf4; border-color:#bbf7d0;">
+                                <button onclick="copyAdminMonitorLink()" class="btn btn-ghost"><i
+                                        class="ph-bold ph-copy"></i> Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Reconnect to existing exam ── -->
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="ph ph-plug-charging"></i> Reconnect to Existing Exam</div>
+                    </div>
+                    <div class="card-body" style="display:flex; flex-direction:column; gap:14px;">
+                        <p style="font-size:.8125rem; color:#71717a; line-height:1.6;">Already started an exam? Paste
+                            its UUID below to jump straight into the live monitor dashboard.</p>
+                        <div class="share-row">
+                            <input type="text" id="reconnect-id-input" class="input input-mono"
+                                placeholder="e.g. 2565f07c-097b-40e2-a2d5-2ef61209b673">
+                            <button onclick="handleReconnect()" class="btn btn-dark" style="white-space:nowrap;">
+                                <i class="ph-bold ph-arrow-square-in" style="font-size:14px;"></i> Reconnect
+                            </button>
+                        </div>
+                        <p style="font-size:.75rem; color:#a1a1aa;">You can also bookmark the admin monitor URL:
+                            <code
+                                style="background:#f4f4f5; border:1px solid #e4e4e7; color:#6366f1; padding:2px 7px; border-radius:5px; font-family:'JetBrains Mono',monospace; font-size:.8em;">?role=admin&amp;id=&lt;uuid&gt;</code>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Live Dashboard (hidden until enterLiveDashboard() called) -->
+        <main id="admin-live" style="display:none; flex:1; background:#f4f4f6; overflow-y:auto;">
+
+            <!-- Dashboard header -->
+            <div class="dash-hd">
+                <div class="row gap3">
+                    <div class="dash-icon"><i class="ph-bold ph-webcam"></i></div>
+                    <div>
+                        <div class="dash-title">Admin Proctoring Dashboard</div>
+                        <div class="dash-live">
+                            <div class="dot dot-g anim-pulse-g"></div> Live Monitoring Active
+                        </div>
+                    </div>
+                </div>
+                <div class="row gap2 wrap">
+                    <!-- Media stream toggles -->
+                    <button id="btn-toggle-cam" onclick="toggleMedia('video')" class="btn-media btn-media-cam off"
+                        title="Toggle candidate camera stream">
+                        <i class="ph-bold ph-video-camera-slash" id="icon-cam"></i>
+                        <span id="label-cam">Camera Off</span>
+                    </button>
+                    <button id="btn-toggle-mic" onclick="toggleMedia('audio')" class="btn-media btn-media-mic off"
+                        title="Toggle candidate microphone">
+                        <i class="ph-bold ph-microphone-slash" id="icon-mic"></i>
+                        <span id="label-mic">Mic Off</span>
+                    </button>
+                    <div class="media-sep"></div>
+                    <!-- Exam controls -->
+                    <button onclick="simulateBlur()" class="btn btn-amber"><i class="ph-fill ph-warning"></i> Simulate
+                        Blur</button>
+                    <button onclick="restartExam()" class="btn btn-dark"><i
+                            class="ph-bold ph-arrow-counter-clockwise"></i> Restart Exam</button>
+                    <button onclick="finishExam()" class="btn btn-red"><i class="ph-bold ph-stop-circle"></i>
+                        Finish</button>
+                </div>
+            </div>
+
+            <!-- 60/40 grid -->
+            <div class="live-grid">
+
+                <!-- LEFT: Webcam -->
+                <div class="card col" id="video-container">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="ph ph-video-camera"></i> Candidate Webcam Feed</div>
+                        <div class="row gap2">
+                            <div class="badge-live">
+                                <div class="badge-dot dot-g anim-pulse-g"></div> LIVE
+                            </div>
+                            <span class="room-chip" id="admin-room-id-display"></span>
+                        </div>
+                    </div>
+
+                    <div class="video-stage">
+                        <video id="admin-video" autoplay playsinline></video>
+
+                        <div id="video-placeholder" class="vp-wrap">
+                            <div class="vp-box">
+                                <i class="ph-thin ph-video-camera-slash"></i>
+                                <div class="vp-title">No Stream Yet</div>
+                                <div class="vp-sub">Click <strong style="color:#dcfce7;">Camera On</strong> in the
+                                    header above to request the candidate&apos;s video stream. The candidate must first
+                                    join the exam link.</div>
+                            </div>
+                        </div>
+
+                        <div class="rec-badge">
+                            <div class="v-dot anim-pulse-r"></div>
+                            <span>RTC Feed</span>
+                        </div>
+
+                        <div id="admin-termination-overlay" class="violation-popup" style="display:none;">
+                            <div class="vp-card-alert">
+                                <div class="vo-icon"><i class="ph-fill ph-warning-octagon"></i></div>
+                                <h2>Violation Detected</h2>
+                                <p>Candidate navigated away from the exam window. What would you like to do?</p>
+                                <div class="row gap2" style="justify-content:center;">
+                                    <button onclick="restartExam()" class="btn btn-ghost"
+                                        style="flex:1;justify-content:center;">Allow</button>
+                                    <button onclick="finishExam()" class="btn btn-red"
+                                        style="flex:1;justify-content:center;">Drop Exam</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="video-footer">
+                        <div id="admin-status-text" class="status-row" style="color:#16a34a;">
+                            <div class="dot dot-g anim-pulse-g"></div> Monitoring Active
+                        </div>
+                        <div id="admin-score-results" class="score-row" style="display:none;">
+                            <span class="fs12 fw5" style="color:#71717a;">Final Score:</span>
+                            <span id="admin-score-percentage" class="score-big"></span>
+                            <span class="score-pill pill-g">Correct: <span id="admin-score-correct"></span></span>
+                            <span class="score-pill pill-r">Wrong: <span id="admin-score-wrong"></span></span>
+                            <button onclick="showExamReview()" class="btn btn-ghost"
+                                style="padding:6px 12px; font-size:0.75rem; border-radius:99px;"><i
+                                    class="ph-bold ph-magnifying-glass"></i> Review</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT column -->
+                <div class="col gap5">
+
+                    <!-- Question Status -->
+                    <div class="card">
+                        <div class="card-hd">
+                            <div class="card-title"><i class="ph ph-grid-four"></i> Question Status</div>
+                            <div class="legend">
+                                <span><span class="leg-dot" style="background:#2563eb;"></span> Current</span>
+                                <span><span class="leg-dot"
+                                        style="background:#86efac; border:1px solid #4ade80;"></span> Answered</span>
+                                <span><span class="leg-dot"
+                                        style="background:#f4f4f5; border:1px solid #e4e4e7;"></span> Pending</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="question-status-grid" class="q-grid"></div>
+                            <div id="admin-progress-display" class="prog-text">Awaiting candidate connection...</div>
+                        </div>
+                    </div>
+
+                    <!-- Telemetry Log -->
+                    <div class="card col" style="flex:1; min-height:260px;">
+                        <div class="term-hd">
+                            <div class="term-title"><i class="ph ph-terminal-window"></i> Browser Focus &amp; Telemetry
+                                Logs</div>
+                            <div class="row gap2">
+                                <div class="win-dot win-r"></div>
+                                <div class="win-dot win-y"></div>
+                                <div class="win-dot win-g"></div>
+                            </div>
+                        </div>
+                        <div id="admin-logs" class="term-canvas"></div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+
+        <!-- Admin Question Details Modal -->
+        <div id="admin-question-modal" class="violation-popup" style="display:none; z-index:9999; padding:20px; position:fixed; inset:0;">
+            <div class="card"
+                style="width:100%; max-width:500px; animation:logIn .2s ease-out; box-shadow:0 20px 40px rgba(0,0,0,0.3);">
+                <div class="card-hd" style="background:#f8fafc;">
+                    <div class="card-title" style="font-size:1rem;"><i class="ph-fill ph-question"
+                            style="color:#2563eb; font-size:20px;"></i> Question Details</div>
+                    <button onclick="hide($('admin-question-modal'))" class="btn btn-ghost" style="padding:6px;"><i
+                            class="ph-bold ph-x" style="font-size:16px;"></i></button>
+                </div>
+                <div class="card-body" id="admin-question-content"
+                    style="flex:1; display:flex; flex-direction:column; gap:16px; background:#fff; padding:20px;">
+                    <!-- injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Review Modal -->
+        <div id="admin-review-modal" class="violation-popup" style="display:none; z-index:100; padding:20px;">
+            <div class="card"
+                style="width:100%; max-width:640px; max-height:85vh; display:flex; flex-direction:column; animation:logIn .2s ease-out; box-shadow:0 20px 40px rgba(0,0,0,0.3);">
+                <div class="card-hd" style="background:#f8fafc;">
+                    <div class="card-title" style="font-size:1rem;"><i class="ph-fill ph-check-square-offset"
+                            style="color:#2563eb; font-size:20px;"></i> Candidate Exam Review</div>
+                    <button onclick="hide($('admin-review-modal'))" class="btn btn-ghost" style="padding:6px;"><i
+                            class="ph-bold ph-x" style="font-size:16px;"></i></button>
+                </div>
+                <div class="card-body custom-scrollbar" id="admin-review-content"
+                    style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:16px; background:#fafafa;">
+                    <!-- details injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================================== -->
+    <!-- CANDIDATE VIEW — starts hidden via inline style             -->
+    <!-- ========================================================== -->
+    <div id="candidate-view" style="display:none; flex-direction:column; height:100vh; overflow:hidden;">
+
+        <header class="cand-nav">
+            <div class="row gap3">
+                <div class="cand-icon"><i class="ph-bold ph-student"></i></div>
+                <div>
+                    <div class="cand-title">Swayam Assessment</div>
+                    <div class="cand-sub">Secure Proctored Session</div>
+                </div>
+            </div>
+            <div class="row gap3">
+                <div id="candidate-status" class="cand-status">
+                    <i class="ph ph-circle-notch anim-spin" style="font-size:12px;"></i> Connecting
+                </div>
+                <div class="cand-timer">
+                    <i class="ph-fill ph-timer"></i>
+                    <span id="candidate-timer">00:00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- relative wrapper so overlays stack correctly -->
+        <div style="flex:1; position:relative; overflow:hidden; background:#f8fafc;">
+
+            <!-- Loader -->
+            <div id="candidate-loader" class="center-abs" style="background:#f8fafc;">
+                <div class="loader-wrap"><i class="ph ph-circle-notch anim-spin"></i></div>
+                <p style="font-size:1.1rem; font-weight:700; color:#1e293b; margin-bottom:6px;">Establishing Secure
+                    Connection</p>
+                <p style="font-size:.875rem; color:#94a3b8; max-width:340px; line-height:1.6;">Please allow camera &amp;
+                    microphone access. Your session is encrypted.</p>
+            </div>
+
+            <!-- Invalid link -->
+            <div id="invalid-link-view" class="center-abs" style="display:none; background:#f8fafc;">
+                <div class="exp-card">
+                    <div class="exp-icon"><i class="ph-fill ph-lock"></i></div>
+                    <h2 style="font-size:1.375rem; font-weight:800; color:#0f172a; margin-bottom:8px;">Link Expired</h2>
+                    <p style="font-size:.875rem; color:#64748b; line-height:1.6;">This exam has been closed by the
+                        administrator.</p>
+                </div>
+            </div>
+
+            <!-- No Exam Scheduled -->
+            <div id="no-exam-scheduled-view" class="center-abs" style="display:none; background:#f8fafc;">
+                <div class="exp-card">
+                    <div class="exp-icon" style="background:#eef2ff;"><i class="ph-fill ph-calendar-blank"
+                            style="color:#6366f1;"></i></div>
+                    <h2 style="font-size:1.375rem; font-weight:800; color:#0f172a; margin-bottom:8px;">No Exam Scheduled
+                    </h2>
+                    <p style="font-size:.875rem; color:#64748b; line-height:1.6;">You have no exams scheduled for today.
+                        Please wait until tomorrow for a new test.</p>
+                </div>
+            </div>
+
+            <!-- Waiting Room -->
+            <div id="scheduled-waiting-view" class="center-abs" style="display:none; background:#f8fafc;">
+                <div class="exp-card" style="text-align:center;">
+                    <div class="exp-icon" style="background:#fef3c7;"><i class="ph-fill ph-hourglass-high"
+                            style="color:#d97706;"></i></div>
+                    <h2 style="font-size:1.375rem; font-weight:800; color:#0f172a; margin-bottom:8px;">Exam Scheduled
+                    </h2>
+                    <p style="font-size:.875rem; color:#64748b; line-height:1.6; margin-bottom:16px;">This exam will
+                        begin at:</p>
+                    <div id="scheduled-time-display"
+                        style="font-size:1.1rem; font-weight:700; color:#0f172a; margin-bottom:24px; padding:8px 16px; background:#f1f5f9; border-radius:8px; display:inline-block;">
+                    </div>
+
+                    <div style="margin-bottom:24px;">
+                        <div
+                            style="font-size:0.75rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+                            Starting In</div>
+                        <div id="scheduled-countdown-display"
+                            style="font-family:'JetBrains Mono',monospace; font-size:1.5rem; font-weight:800; color:#6366f1;">
+                            --:--:--</div>
+                    </div>
+
+                    <button id="btn-start-scheduled" onclick="startScheduledExam()" class="btn btn-emerald w100"
+                        style="justify-content:center; opacity:0.6;" disabled>
+                        Start Exam
+                    </button>
+                    <p style="font-size:0.7rem; color:#a1a1aa; margin-top:12px;">Time is synchronized with global
+                        servers. Changing your device clock will not bypass this wait.</p>
+                </div>
+            </div>
+
+            <!-- Active exam -->
+            <div id="candidate-content" style="display:none; position:absolute; inset:0; overflow-y:auto;">
+                <div class="cand-main">
+                    <div class="cand-inner">
+
+                        <div class="row between wrap gap3" style="align-items:flex-start;">
+                            <div>
+                                <h2
+                                    style="font-size:1.375rem; font-weight:800; color:#0f172a; letter-spacing:-.02em; margin-bottom:8px;">
+                                    Technical Evaluation</h2>
+                                <div class="cand-alert"><i class="ph-fill ph-shield-warning"
+                                        style="font-size:13px;"></i> Proctored — Do Not Switch Tabs</div>
+                            </div>
+                            <div style="text-align:right; flex-shrink:0;">
+                                <div style="font-size:.72rem; color:#94a3b8; font-weight:600; margin-bottom:6px;">Q
+                                    <span id="q-current" style="color:#6366f1; font-weight:800;">1</span> / <span
+                                        id="q-total">?</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" id="q-progress-bar"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cand-card">
+                            <div id="candidate-question-display"></div>
+                        </div>
+
+                        <div class="cand-controls">
+                            <button id="btn-prev" onclick="prevQuestion()" class="btn btn-ghost">&larr;
+                                Previous</button>
+                            <div class="row gap3">
+                                <button id="btn-next" onclick="nextQuestion()" class="btn btn-indigo">Next
+                                    &rarr;</button>
+                                <button id="btn-submit" onclick="submitExam()" class="btn btn-emerald"
+                                    style="display:none;">
+                                    <i class="ph-bold ph-paper-plane-tilt" style="font-size:14px;"></i> Submit Exam
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score overlay -->
+            <div id="candidate-score-overlay" class="score-overlay" style="display:none;">
+                <div class="score-card">
+                    <div class="si-wrap green" id="score-icon-wrap">
+                        <i id="score-icon" class="ph-bold ph-check" style="color:#10b981; font-size:40px;"></i>
+                    </div>
+                    <h2
+                        style="font-size:1.6rem; font-weight:800; color:#0f172a; letter-spacing:-.02em; margin-bottom:8px;">
+                        Assessment Complete</h2>
+                    <p style="font-size:.875rem; color:#64748b; margin-bottom:28px;">Your encrypted results have been
+                        transmitted to the proctor.</p>
+                    <div class="score-pct-box">
+                        <div
+                            style="font-size:.68rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.1em; margin-bottom:8px;">
+                            Your Score</div>
+                        <div class="score-num" id="candidate-score-display">0%</div>
+                    </div>
+                    <button onclick="showNoExamScheduled()" class="btn btn-ghost w100"
+                        style="justify-content:center;">Return Home</button>
+                </div>
+            </div>
+
+            <!-- Lockout overlay -->
+            <div id="candidate-termination-overlay" class="lockout" style="display:none;">
+                <div class="lockout-icon"><i class="ph-fill ph-lock-key" style="font-size:56px; color:#ef4444;"></i>
+                </div>
+                <h2
+                    style="font-size:1.75rem; font-weight:900; color:#fafafa; margin-bottom:12px; letter-spacing:-.02em;">
+                    Exam Suspended</h2>
+                <p style="color:#a1a1aa; max-width:400px; font-size:.9rem; line-height:1.7; margin-bottom:26px;">Our
+                    proctor detected you left the exam window. This incident has been flagged for review.</p>
+                <div class="lockout-wait">
+                    <i class="ph ph-circle-notch anim-spin"></i> Awaiting proctor clearance...
+                </div>
+            </div>
+
+            <!-- Camera Warning overlay -->
+            <div id="camera-warning-overlay" class="lockout" style="display:none; z-index:999;">
+                <div class="lockout-icon"><i class="ph-fill ph-video-camera-slash"
+                        style="font-size:56px; color:#ef4444;"></i></div>
+                <h2
+                    style="font-size:1.75rem; font-weight:900; color:#fafafa; margin-bottom:12px; letter-spacing:-.02em;">
+                    Camera Required</h2>
+                <p style="color:#a1a1aa; max-width:400px; font-size:.9rem; line-height:1.7; margin-bottom:26px;">
+                    Turning on the camera and microphone is mandatory to proceed with this proctored exam. Please click
+                    the button below to grant permission. If you previously denied access, you may need to click the
+                    lock icon in your browser's address bar to allow permissions.
+                </p>
+                <button onclick="setupCandidateWebcam()" class="btn btn-emerald" style="padding:12px 24px;">
+                    Grant Permission
+                </button>
+            </div>
+
+        </div><!-- end relative wrapper -->
+    </div>
+
+
+    <!-- ========================================================== -->
+    <!-- APPLICATION LOGIC                                           -->
+    <!-- ========================================================== -->
+    <script>
+        const $ = id => document.getElementById(id);
+
+        /* ── View router ──
+           Admin-view starts visible (display:flex).
+           If URL has ?role=candidate&id=..., we hide admin, show candidate. */
+        const urlParams = new URLSearchParams(window.location.search);
+        const role = urlParams.get('role');
+        const examIdFromUrl = urlParams.get('id');
+
+        if (role === 'candidate' && examIdFromUrl) {
+            document.body.classList.add('cmode');
+            $('admin-view').style.display = 'none';
+            $('candidate-view').style.display = 'flex';
+            initCandidate(examIdFromUrl);
+        } else if (role === 'admin' && examIdFromUrl) {
+            // Admin reconnect: go straight to live dashboard for an existing exam ID
+            reconnectToExam(examIdFromUrl);
+        }
+        // else: admin-view is already visible by default
+
+        /* ── Helpers ── */
+        function showFlex(el) { el.style.display = 'flex'; }
+        function showBlock(el) { el.style.display = 'block'; }
+        function hide(el) { el.style.display = 'none'; }
+
+        function parseQuestions(raw) {
+            return raw.trim().split(/\n\s*\n/).map(block => {
+                const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+                let q = lines[0], options = [], ans = '';
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].toLowerCase().startsWith('answer:')) ans = lines[i].replace(/answer:/i, '').trim();
+                    else options.push(lines[i]);
+                }
+                return { q, options, ans };
+            });
+        }
+
+        function formatTime(sec) {
+            return `${Math.floor(sec / 60).toString().padStart(2, '0')}:${(sec % 60).toString().padStart(2, '0')}`;
+        }
+
+        /* ── Q-Grid ── */
+        let totalQs = 30;
+        let adminParsedQuestions = [];
+        let adminCandidateAnswers = {};
+
+        function buildQGrid(total) {
+            totalQs = total || 30;
+            const g = $('question-status-grid');
+            g.innerHTML = '';
+            for (let i = 1; i <= totalQs; i++) {
+                const c = document.createElement('div');
+                c.id = `qc-${i}`; c.className = 'q-cell'; c.innerText = i;
+                c.style.cursor = 'pointer';
+                c.title = 'Click to view question details';
+                c.onclick = () => showQuestionDetails(i - 1);
+                g.appendChild(c);
+            }
+        }
+        
+        function showQuestionDetails(idx) {
+            const q = adminParsedQuestions[idx];
+            if (!q) {
+                alert('Question details not available.');
+                return;
+            }
+            const candidateAns = adminCandidateAnswers[idx] || 'Not answered yet';
+            const content = `
+                <div style="font-weight:600; font-size:16px; margin-bottom:12px;">Q${idx + 1}: ${q.q}</div>
+                <div style="margin-bottom:12px;">
+                    ${q.options.map(opt => `<div style="padding:4px 0; color:#3f3f46;">&bull; ${opt}</div>`).join('')}
+                </div>
+                <div style="padding:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; margin-bottom:8px; color:#166534; font-weight:500;">
+                    Correct Answer: ${q.ans}
+                </div>
+                <div style="padding:12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; color:#1e40af; font-weight:500;">
+                    Candidate Choosed: ${candidateAns}
+                </div>
+            `;
+            $('admin-question-content').innerHTML = content;
+            showFlex($('admin-question-modal'));
+        }
+        function setQCell(idx, state) {
+            const c = $(`qc-${idx + 1}`);
+            if (!c) return;
+            c.className = 'q-cell';
+            if (state === 'cur') c.classList.add('cur');
+            if (state === 'ans') c.classList.add('ans');
+        }
+
+        /* ---- Admin media-toggle state ---- */
+        let adminMedia = { video: false, audio: false };
+
+        /**
+         * Admin toggles camera or mic.
+         * Broadcasts media_control to candidate which enables/disables their tracks.
+         */
+        function toggleMedia(type) {
+            adminMedia[type] = !adminMedia[type];
+
+            // Update button UI
+            if (type === 'video') {
+                const btn = $('btn-toggle-cam');
+                const icon = $('icon-cam');
+                const lbl = $('label-cam');
+                if (adminMedia.video) {
+                    btn.className = 'btn-media btn-media-cam on';
+                    icon.className = 'ph-bold ph-video-camera';
+                    lbl.innerText = 'Camera On';
+                } else {
+                    btn.className = 'btn-media btn-media-cam off';
+                    icon.className = 'ph-bold ph-video-camera-slash';
+                    lbl.innerText = 'Camera Off';
+                }
+            } else {
+                const btn = $('btn-toggle-mic');
+                const icon = $('icon-mic');
+                const lbl = $('label-mic');
+                if (adminMedia.audio) {
+                    btn.className = 'btn-media btn-media-mic on';
+                    icon.className = 'ph-bold ph-microphone';
+                    lbl.innerText = 'Mic On';
+                } else {
+                    btn.className = 'btn-media btn-media-mic off';
+                    icon.className = 'ph-bold ph-microphone-slash';
+                    lbl.innerText = 'Mic Off';
+                }
+            }
+
+            // Broadcast to candidate
+            if (examChannel) {
+                examChannel.send({
+                    type: 'broadcast',
+                    event: 'media_control',
+                    payload: { video: adminMedia.video, audio: adminMedia.audio }
+                });
+            }
+
+            adminLog(
+                `Media control: Camera ${adminMedia.video ? 'ENABLED' : 'DISABLED'} · Mic ${adminMedia.audio ? 'ENABLED' : 'DISABLED'}`,
+                adminMedia.video || adminMedia.audio ? 'good' : 'info'
+            );
+        }
+
+        /**
+         * Reconnect admin to an existing exam by UUID.
+         * Fetches the exam from Supabase, rebuilds the Q-grid, and enters the live dashboard.
+         * Called when URL is ?role=admin&id=<uuid>
+         */
+        async function reconnectToExam(id) {
+            if (!supabaseClient) { alert('Supabase not initialised.'); return; }
+            try {
+                const { data, error } = await supabaseClient
+                    .from('exams').select('*').eq('id', id).single();
+                if (error || !data) {
+                    alert('Exam not found for ID: ' + id);
+                    return;
+                }
+                activeExamId = id;
+                adminParsedQuestions = data.parsed_questions || [];
+                buildQGrid(data.parsed_questions ? data.parsed_questions.length : 30);
+                setupAdminPeer();
+                setupAdminChannel();
+                // Jump directly to live dashboard
+                hide($('admin-config'));
+                showBlock($('admin-live'));
+                $('admin-room-id-display').innerText = id.substring(0, 8).toUpperCase() + '…';
+                adminLog(`Reconnected to exam: ${id}`, 'good');
+                adminLog(`Status in DB: ${data.status}`, 'info');
+            } catch (err) {
+                console.error('Reconnect error:', err);
+                alert('Failed to reconnect. See console.');
+            }
+        }
+
+        /**
+         * Called from the Reconnect card's button on the config page.
+         */
+        async function handleReconnect() {
+            const id = $('reconnect-id-input').value.trim();
+            if (!id) { alert('Please enter an exam ID.'); return; }
+            await reconnectToExam(id);
+        }
+
+
+        async function startAdminExam() {
+            try {
+                const duration = parseInt($('exam-duration').value) || 60;
+                const rawText = $('raw-text').value;
+                const parsed = parseQuestions(rawText);
+                const schedVal = $('exam-scheduled-time').value;
+                let scheduledFor = null;
+                if (schedVal) {
+                    scheduledFor = new Date(schedVal).toISOString();
+                }
+
+                if (!supabaseClient) { alert('Supabase not initialised.'); return; }
+
+                const { data, error } = await supabaseClient
+                    .from('exams')
+                    .insert([{
+                        raw_text: rawText,
+                        duration_minutes: duration,
+                        parsed_questions: parsed,
+                        status: 'active',
+                        scheduled_for: scheduledFor
+                    }])
+                    .select();
+
+                if (error) { console.error('Database Error:', error); alert('Supabase Error: ' + error.message); return; }
+
+                if (data && data.length > 0) {
+                    activeExamId = data[0].id;
+                    adminParsedQuestions = parsed;
+                    const candidateLink = `${location.origin}${location.pathname}?role=candidate&id=${activeExamId}`;
+                    const adminLink = `${location.origin}${location.pathname}?role=admin&id=${activeExamId}`;
+                    $('shareable-url').value = candidateLink;
+                    $('admin-monitor-url').value = adminLink;
+                    showBlock($('share-link-container'));
+                    buildQGrid(parsed.length);
+                    setupAdminPeer();
+                    setupAdminChannel();
+                }
+            } catch (err) { console.error('Database Error:', err); alert('Critical error. See console.'); }
+        }
+
+        function copyAdminLink() { const e = $('shareable-url'); e.select(); document.execCommand('copy'); }
+        function copyAdminMonitorLink() { const e = $('admin-monitor-url'); e.select(); document.execCommand('copy'); }
+
+        function enterLiveDashboard() {
+            hide($('admin-config'));
+            showBlock($('admin-live'));
+            $('admin-room-id-display').innerText = activeExamId
+                ? activeExamId.substring(0, 8).toUpperCase() + '…' : '';
+            adminLog('Live monitoring dashboard initialised.', 'info');
+        }
+
+        function setupAdminPeer() {
+            peer = new Peer(`proctor-${activeExamId}`);
+            peer.on('open', id => adminLog(`WebRTC proctor node ready · ${id.substring(0, 14)}…`, 'good'));
+            peer.on('call', call => {
+                adminLog('Incoming A/V stream — securing P2P connection…', 'info');
+                call.answer();
+                call.on('stream', stream => {
+                    adminLog('Candidate video feed linked via WebRTC.', 'good');
+                    $('admin-video').srcObject = stream;
+                    hide($('video-placeholder'));
+                });
+            });
+            peer.on('error', err => adminLog(`PeerJS: ${err.type}`, 'error'));
+        }
+
+        function setupAdminChannel() {
+            if (!supabaseClient) return;
+            examChannel = supabaseClient.channel('swayam-exam');
+
+            // Core proctoring event — preserved from original
+            examChannel.on('broadcast', { event: 'window_blur' }, async () => {
+                adminLog('⚠ CRITICAL — Candidate tab blur detected. Session suspended.', 'error');
+                $('video-container').style.outline = '2px solid #dc2626';
+                $('video-container').style.boxShadow = '0 0 0 4px rgba(220,38,38,.18)';
+                showFlex($('admin-termination-overlay'));
+                $('admin-status-text').innerHTML =
+                    `<div class="dot dot-r anim-pulse-r"></div> <span style="color:#dc2626;">Violation Detected</span>`;
+                try {
+                    const { error } = await supabaseClient.from('exams').update({ status: 'terminated' }).eq('id', activeExamId);
+                    if (error) console.error('Database Error:', error);
+                } catch (e) { console.error('Database Error:', e); }
+            });
+
+            examChannel.on('broadcast', { event: 'progress_update' }, payload => {
+                const { currentIndex, total, answered, answeredMap } = payload.payload;
+                adminCandidateAnswers = answeredMap || {};
+                for (let i = 0; i < (total || totalQs); i++) {
+                    if (i === currentIndex) setQCell(i, 'cur');
+                    else if (answeredMap && answeredMap[i] !== undefined) setQCell(i, 'ans');
+                    else setQCell(i, '');
+                }
+                const pct = Math.round((answered / total) * 100);
+                $('admin-progress-display').innerHTML =
+                    `Viewing <strong>Q${currentIndex + 1}</strong> of ${total} &nbsp;·&nbsp; <span style="color:#16a34a;font-weight:600;">${answered} answered</span> (${pct}%)`;
+            });
+
+            examChannel.on('broadcast', { event: 'exam_completed' }, payload => {
+                const { percentage, correct, wrong, details } = payload.payload;
+                adminExamDetails = details || [];
+                adminLog(`Candidate submitted. Auto-score: ${percentage}%`, 'good');
+                showFlex($('admin-score-results'));
+                $('admin-score-percentage').innerText = `${percentage}%`;
+                $('admin-score-correct').innerText = correct;
+                $('admin-score-wrong').innerText = wrong;
+            });
+
+            examChannel.subscribe(status => {
+                if (status === 'SUBSCRIBED')
+                    adminLog('Connected to Supabase channel: swayam-exam', 'good');
+            });
+        }
+
+        function adminLog(msg, type) {
+            const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+            const clr = { good: '#34d399', error: '#f87171', info: '#818cf8' }[type] || '#818cf8';
+            const txt = { good: '#d1fae5', error: '#fee2e2', info: '#c7d2fe' }[type] || '#c7d2fe';
+            const line = document.createElement('div');
+            line.className = 'anim-log';
+            line.style.cssText = 'display:flex;gap:10px;margin-bottom:6px;';
+            line.innerHTML =
+                `<span style="color:#4b5563;font-size:.63rem;white-space:nowrap;font-family:'JetBrains Mono',monospace;">[${time}]</span>` +
+                `<span style="color:${clr};font-size:.63rem;font-family:'JetBrains Mono',monospace;">&gt;_</span>` +
+                `<span style="color:${txt};font-size:.68rem;font-family:'JetBrains Mono',monospace;line-height:1.5;">${msg}</span>`;
+            const logs = $('admin-logs');
+            logs.appendChild(line);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function simulateBlur() {
+            adminLog('Manual blur simulation triggered.', 'info');
+            if (examChannel) {
+                examChannel.send({ type: 'broadcast', event: 'window_blur', payload: { ts: new Date().toISOString(), simulated: true } });
+            } else {
+                // Demo mode — trigger overlay directly
+                $('video-container').style.outline = '2px solid #dc2626';
+                $('video-container').style.boxShadow = '0 0 0 4px rgba(220,38,38,.18)';
+                showFlex($('admin-termination-overlay'));
+                $('admin-status-text').innerHTML = `<div class="dot dot-r anim-pulse-r"></div> <span style="color:#dc2626;">Violation Detected</span>`;
+                adminLog('⚠ CRITICAL — Demo blur (no active channel).', 'error');
+            }
+        }
+
+        async function restartExam() {
+            if (!activeExamId || !supabaseClient) return;
+            adminLog('Broadcasting security clearance to candidate…', 'info');
+            $('video-container').style.outline = '';
+            $('video-container').style.boxShadow = '';
+            hide($('admin-termination-overlay'));
+            $('admin-status-text').innerHTML =
+                `<div class="dot dot-g anim-pulse-g"></div> <span style="color:#16a34a;">Monitoring Active</span>`;
+            try {
+                const { error } = await supabaseClient.from('exams').update({ status: 'active' }).eq('id', activeExamId);
+                if (error) console.error('Database Error:', error);
+            } catch (e) { console.error('Database Error:', e); }
+            if (examChannel) examChannel.send({ type: 'broadcast', event: 'reset_test', payload: { cleared: true } });
+            adminLog('Violation cleared. Session monitoring restored.', 'good');
+        }
+
+        async function finishExam() {
+            if (activeExamId && supabaseClient) {
+                try {
+                    const { error } = await supabaseClient.from('exams').update({ status: 'finished' }).eq('id', activeExamId);
+                    if (error) console.error('Database Error:', error);
+                } catch (e) { console.error('Database Error:', e); }
+            }
+            hide($('admin-live'));
+            showBlock($('admin-config'));
+            hide($('share-link-container'));
+            hide($('admin-score-results'));
+            $('admin-progress-display').innerHTML = 'Awaiting candidate connection...';
+            $('admin-video').srcObject = null;
+            showFlex($('video-placeholder'));
+            $('admin-logs').innerHTML = '';
+            hide($('admin-termination-overlay'));
+            if (peer) peer.destroy();
+            if (examChannel && supabaseClient) supabaseClient.removeChannel(examChannel);
+            activeExamId = null;
+            adminExamDetails = [];
+        }
+
+        /* ---- Admin Review Feature ---- */
+        let adminExamDetails = [];
+        function showExamReview() {
+            const container = $('admin-review-content');
+            container.innerHTML = '';
+            if (!adminExamDetails || adminExamDetails.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#71717a; padding:20px;">No detailed results available.</div>';
+            } else {
+                adminExamDetails.forEach((d, i) => {
+                    const isCorrect = d.isCorrect;
+                    const clr = isCorrect ? '#16a34a' : '#dc2626';
+                    const bg = isCorrect ? '#f0fdf4' : '#fef2f2';
+                    const brd = isCorrect ? '#bbf7d0' : '#fecaca';
+                    const icon = isCorrect ? '<i class="ph-bold ph-check-circle" style="color:#16a34a; font-size:16px;"></i>' : '<i class="ph-bold ph-x-circle" style="color:#dc2626; font-size:16px;"></i>';
+
+                    container.innerHTML += `
+                        <div style="background:${bg}; border:1px solid ${brd}; border-radius:12px; padding:18px; text-align:left;">
+                            <div style="font-size:0.75rem; font-weight:800; color:${clr}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                                ${icon} Question ${i + 1} ${!d.ans ? '<span style="color:#71717a; font-weight:600; text-transform:none;">(No answer key provided)</span>' : ''}
+                            </div>
+                            <div style="font-size:0.95rem; font-weight:700; color:#09090b; margin-bottom:12px; line-height:1.5;">${d.q}</div>
+                            <div style="font-size:0.85rem; color:#4b5563; display:flex; flex-direction:column; gap:6px;">
+                                <div style="background:#fff; border:1px solid #e4e4e7; padding:8px 12px; border-radius:8px;">
+                                    <span style="font-weight:700; color:#3f3f46; display:inline-block; width:130px;">Candidate Answer:</span> 
+                                    <span style="${isCorrect ? 'color:#16a34a;font-weight:700;' : 'color:#dc2626;font-weight:700;'}">${d.candidateAns || '<span style="color:#a1a1aa;font-style:italic;font-weight:400;">Skipped</span>'}</span>
+                                </div>
+                                ${d.ans ? `
+                                <div style="background:#fff; border:1px solid #e4e4e7; padding:8px 12px; border-radius:8px;">
+                                    <span style="font-weight:700; color:#3f3f46; display:inline-block; width:130px;">Correct Answer:</span> 
+                                    <span style="color:#16a34a;font-weight:700;">${d.ans}</span>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            showFlex($('admin-review-modal'));
+        }
+
+        /* ---- Time Synchronization & Scheduling ---- */
+        let globalTimeOffsetMs = 0;
+        let scheduleInterval = null;
+
+        async function fetchTrueTimeOffset() {
+            try {
+                const startFetch = Date.now();
+                const res = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+                const data = await res.json();
+                const endFetch = Date.now();
+                const serverTimeMs = new Date(data.datetime).getTime();
+                const localTimeMs = startFetch + ((endFetch - startFetch) / 2);
+                globalTimeOffsetMs = serverTimeMs - localTimeMs;
+                console.log(`Global time offset calculated: ${globalTimeOffsetMs}ms`);
+            } catch (err) {
+                console.error('Failed to sync global time.', err);
+                globalTimeOffsetMs = 0; // fallback to local time if API fails
+            }
+        }
+
+        function getTrueNow() { return Date.now() + globalTimeOffsetMs; }
+
+        /* ==================== CANDIDATE ==================== */
+        let candidateTimer = 0, candidateInterval = null, isCandidateLocked = false;
+        let parsedExamQuestions = [], candidateAnswers = {}, currentQIndex = 0;
+
+        async function initCandidate(id) {
+            activeExamId = id;
+            if (!supabaseClient) { $('candidate-loader').innerHTML = '<p style="color:#ef4444;font-weight:600;">Supabase failed to load.</p>'; return; }
+            try {
+                const { data, error } = await supabaseClient.from('exams').select('*').eq('id', activeExamId).single();
+                if (error || !data) { $('candidate-loader').innerHTML = '<p style="color:#ef4444;font-weight:600;">Invalid exam ID.</p>'; return; }
+                if (data.status === 'finished') {
+                    hide($('candidate-loader'));
+                    showFlex($('invalid-link-view'));
+                    return;
+                }
+
+                parsedExamQuestions = data.parsed_questions;
+                candidateTimer = data.duration_minutes * 60;
+
+                if (data.scheduled_for) {
+                    await fetchTrueTimeOffset();
+                    const targetTime = new Date(data.scheduled_for).getTime();
+                    if (getTrueNow() < targetTime) {
+                        setupScheduledWait(targetTime);
+                        return; // Halt here until they click Start
+                    }
+                }
+
+                beginCandidateExamSession();
+            } catch (err) { console.error('Database Error:', err); }
+        }
+
+        function setupScheduledWait(targetTime) {
+            hide($('candidate-loader'));
+            showFlex($('scheduled-waiting-view'));
+
+            const localDate = new Date(targetTime);
+            $('scheduled-time-display').innerText = localDate.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            const btnStart = $('btn-start-scheduled');
+
+            const tick = () => {
+                const rem = targetTime - getTrueNow();
+                if (rem <= 0) {
+                    clearInterval(scheduleInterval);
+                    $('scheduled-countdown-display').innerText = "00:00:00";
+                    btnStart.disabled = false;
+                    btnStart.style.opacity = "1";
+                    btnStart.innerText = "Start Exam Now";
+                } else {
+                    const h = Math.floor(rem / (1000 * 60 * 60));
+                    const m = Math.floor((rem % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((rem % (1000 * 60)) / 1000);
+                    $('scheduled-countdown-display').innerText =
+                        `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                }
+            };
+            tick(); // initial call
+            scheduleInterval = setInterval(tick, 1000);
+        }
+
+        function startScheduledExam() {
+            hide($('scheduled-waiting-view'));
+            beginCandidateExamSession();
+        }
+
+        function beginCandidateExamSession() {
+            $('q-total').innerText = parsedExamQuestions.length;
+            renderSingleQuestion();
+            $('candidate-timer').innerText = formatTime(candidateTimer);
+            candidateInterval = setInterval(() => {
+                if (!isCandidateLocked && candidateTimer > 0) {
+                    candidateTimer--;
+                    $('candidate-timer').innerText = formatTime(candidateTimer);
+                }
+            }, 1000);
+            hide($('candidate-loader'));
+            showBlock($('candidate-content'));
+            const s = $('candidate-status');
+            s.innerHTML = '<i class="ph-fill ph-shield-check" style="font-size:13px;color:#10b981;"></i> Protected';
+            s.style.cssText = 'background:#f0fdf4;border:1px solid #86efac;color:#16a34a;padding:6px 12px;border-radius:99px;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;';
+            setupCandidateChannel();
+            setupCandidateWebcam();
+            setupVisibilityListener();
+            broadcastProgress();
+        }
+
+        function renderSingleQuestion() {
+            const q = parsedExamQuestions[currentQIndex];
+            $('q-current').innerText = currentQIndex + 1;
+            $('q-progress-bar').style.width = `${((currentQIndex + 1) / parsedExamQuestions.length) * 100}%`;
+
+            let opts = '';
+            q.options.forEach(opt => {
+                const lm = opt.match(/^([A-Z])[\)\.]/i);
+                const key = lm ? lm[1].toUpperCase() : opt;
+                const sel = candidateAnswers[currentQIndex] === key;
+                opts += `
+                    <div class="opt${sel ? ' sel' : ''}" onclick="selectAnswer('${key}')">
+                        <div class="opt-radio${sel ? ' sel' : ''}">
+                            ${sel ? '<i class="ph-bold ph-check" style="font-size:11px;color:#fff;"></i>' : ''}
+                        </div>
+                        <span class="opt-text${sel ? ' sel' : ''}">${opt}</span>
+                    </div>`;
+            });
+
+            $('candidate-question-display').innerHTML =
+                `<div class="q-lbl">Question ${currentQIndex + 1}</div>
+                 <div class="q-txt">${q.q}</div>
+                 <div>${opts}</div>`;
+
+            $('btn-prev').disabled = currentQIndex === 0;
+            if (currentQIndex === parsedExamQuestions.length - 1) {
+                $('btn-next').style.display = 'none';
+                $('btn-submit').style.display = 'inline-flex';
+            } else {
+                $('btn-next').style.display = 'inline-flex';
+                $('btn-submit').style.display = 'none';
+            }
+        }
+
+        function selectAnswer(val) {
+            candidateAnswers[currentQIndex] = val;
+            renderSingleQuestion();
+            broadcastProgress();
+        }
+        function nextQuestion() {
+            if (currentQIndex < parsedExamQuestions.length - 1) { currentQIndex++; renderSingleQuestion(); broadcastProgress(); }
+        }
+        function prevQuestion() {
+            if (currentQIndex > 0) { currentQIndex--; renderSingleQuestion(); broadcastProgress(); }
+        }
+
+        function broadcastProgress() {
+            if (examChannel && !isCandidateLocked) {
+                examChannel.send({
+                    type: 'broadcast', event: 'progress_update',
+                    payload: { currentIndex: currentQIndex, total: parsedExamQuestions.length, answered: Object.keys(candidateAnswers).length, answeredMap: candidateAnswers }
+                });
+            }
+        }
+
+        function submitExam() {
+            clearInterval(candidateInterval);
+            let correct = 0, wrong = 0;
+            let details = [];
+
+            parsedExamQuestions.forEach((q, i) => {
+                const cAns = candidateAnswers[i];
+                const isCorrect = (q.ans && cAns === q.ans);
+                if (isCorrect) correct++;
+                else wrong++;
+
+                details.push({
+                    q: q.q,
+                    ans: q.ans,
+                    candidateAns: cAns,
+                    isCorrect: isCorrect
+                });
+            });
+            const pct = Math.round((correct / parsedExamQuestions.length) * 100);
+            if (examChannel) {
+                examChannel.send({ type: 'broadcast', event: 'exam_completed', payload: { percentage: pct, correct, wrong, details } });
+            }
+
+            const disp = $('candidate-score-display');
+            disp.innerText = `${pct}%`;
+            const wrap = $('score-icon-wrap'), icon = $('score-icon');
+            if (pct >= 80) {
+                disp.style.color = '#16a34a'; wrap.className = 'si-wrap green';
+                icon.className = 'ph-bold ph-check'; icon.style.color = '#10b981';
+            } else if (pct < 50) {
+                disp.style.color = '#dc2626'; wrap.className = 'si-wrap red';
+                icon.className = 'ph-bold ph-x'; icon.style.color = '#ef4444';
+            } else {
+                disp.style.color = '#d97706'; wrap.className = 'si-wrap amber';
+                icon.className = 'ph-bold ph-check'; icon.style.color = '#f59e0b';
+            }
+            hide($('candidate-content'));
+            showFlex($('candidate-score-overlay'));
+        }
+
+        function showNoExamScheduled() {
+            hide($('candidate-score-overlay'));
+            hide($('candidate-content'));
+            showFlex($('no-exam-scheduled-view'));
+
+            // Clean up the URL to signify they are done
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // Update the top navigation header status
+            const s = $('candidate-status');
+            s.innerHTML = '<i class="ph-fill ph-check-circle" style="font-size:13px;color:#64748b;"></i> Completed';
+            s.style.cssText = 'background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;padding:6px 12px;border-radius:99px;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;';
+            $('candidate-timer').innerText = '--:--';
+        }
+
+        /* ---- Candidate-side media state ---- */
+        let candidateStream = null;   // raw MediaStream from getUserMedia
+        let peerCall = null;          // active PeerJS call object
+        let isPeerReady = false;      // true only after peer.on('open') fires
+        let mediaState = { video: false, audio: false }; // mirrors what admin last broadcast
+
+        function setupCandidateChannel() {
+            if (!supabaseClient) return;
+            examChannel = supabaseClient.channel('swayam-exam');
+
+            examChannel.on('broadcast', { event: 'reset_test' }, () => {
+                isCandidateLocked = false;
+                hide($('candidate-termination-overlay'));
+            });
+
+            /* Admin controls the candidate's media tracks remotely */
+            examChannel.on('broadcast', { event: 'media_control' }, payload => {
+                const { video, audio } = payload.payload;
+                applyMediaState(video, audio);
+            });
+
+            examChannel.subscribe();
+        }
+
+        /**
+         * Enable/disable tracks and initiate PeerJS call when admin requests it.
+         * Guards against calling before peer.on('open') fires (isPeerReady flag).
+         */
+        function applyMediaState(video, audio) {
+            mediaState = { video, audio };
+
+            if (!candidateStream) {
+                // Stream not yet acquired — state is stored and applied once peer is ready
+                return;
+            }
+
+            candidateStream.getVideoTracks().forEach(t => { t.enabled = !!video; });
+            candidateStream.getAudioTracks().forEach(t => { t.enabled = !!audio; });
+
+            // Only call admin PeerJS node if peer is fully open and we haven't called yet
+            if ((video || audio) && !peerCall && isPeerReady) {
+                peerCall = peer.call(`proctor-${activeExamId}`, candidateStream);
+                if (peerCall) {
+                    peerCall.on('error', e => console.error('P2P call error:', e));
+                } else {
+                    console.error('PeerJS call returned null — is proctor peer running?');
+                }
+            }
+        }
+
+        async function setupCandidateWebcam() {
+            try {
+                // Always request media for permission prompt, but start with
+                // both tracks DISABLED — admin decides when to enable them.
+                candidateStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+                // Hide warning if it was shown previously
+                const camWarning = $('camera-warning-overlay');
+                if (camWarning) hide(camWarning);
+
+                candidateStream.getVideoTracks().forEach(t => { t.enabled = false; });
+                candidateStream.getAudioTracks().forEach(t => { t.enabled = false; });
+
+                // Initialise PeerJS — call is only made after peer is open AND admin enables media
+                peer = new Peer();
+                peer.on('open', peerId => {
+                    isPeerReady = true;
+                    console.log('Candidate PeerJS ready:', peerId);
+                    // If admin had already broadcast media_control before peer opened, apply now
+                    if (mediaState.video || mediaState.audio) {
+                        applyMediaState(mediaState.video, mediaState.audio);
+                    }
+                });
+                peer.on('error', e => {
+                    console.error('PeerJS candidate error:', e.type, e);
+                });
+            } catch (err) {
+                console.error('Webcam/Mic permission error:', err);
+                // User denied permission or device not found
+                showFlex($('camera-warning-overlay'));
+            }
+        }
+
+
+        function setupVisibilityListener() {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && !isCandidateLocked) {
+                    isCandidateLocked = true;
+                    showFlex($('candidate-termination-overlay'));
+                    if (examChannel) examChannel.send({ type: 'broadcast', event: 'window_blur', payload: { ts: new Date().toISOString() } });
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
