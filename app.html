@@ -1727,6 +1727,19 @@ Answer: A</textarea>
                         </div>
                     </div>
 
+                    <!-- Send Announcement -->
+                    <div class="card">
+                        <div class="card-hd">
+                            <div class="card-title"><i class="ph ph-chat-centered-text"></i> Send Announcement</div>
+                        </div>
+                        <div class="card-body" style="display:flex; gap:10px; padding:15px 20px;">
+                            <input type="text" id="admin-msg-input" placeholder="Type message to candidate..." class="input" style="flex:1;">
+                            <button onclick="sendAdminMessage()" class="btn btn-indigo" style="white-space:nowrap;">
+                                <i class="ph-bold ph-paper-plane-tilt"></i> Send
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Telemetry Log -->
                     <div class="card col" style="flex:1; min-height:260px;">
                         <div class="term-hd">
@@ -1932,6 +1945,8 @@ Answer: A</textarea>
                             Your Score</div>
                         <div class="score-num" id="candidate-score-display">0%</div>
                     </div>
+                    <button id="btn-candidate-review" onclick="showCandidateReview()" class="btn btn-indigo w100"
+                        style="justify-content:center; margin-bottom:10px;"><i class="ph-bold ph-magnifying-glass"></i> Review Answers</button>
                     <button onclick="showNoExamScheduled()" class="btn btn-ghost w100"
                         style="justify-content:center;">Return Home</button>
                 </div>
@@ -1968,6 +1983,23 @@ Answer: A</textarea>
                 </button>
             </div>
 
+            <!-- Candidate Review Modal -->
+            <div id="candidate-review-modal" class="violation-popup" style="display:none; z-index:1000; padding:20px;">
+                <div class="card"
+                    style="width:100%; max-width:640px; max-height:85vh; display:flex; flex-direction:column; animation:logIn .2s ease-out; box-shadow:0 20px 40px rgba(0,0,0,0.3);">
+                    <div class="card-hd" style="background:#f8fafc;">
+                        <div class="card-title" style="font-size:1rem;"><i class="ph-fill ph-check-square-offset"
+                                style="color:#6366f1; font-size:20px;"></i> Exam Performance Review</div>
+                        <button onclick="hide($('candidate-review-modal'))" class="btn btn-ghost" style="padding:6px;"><i
+                                class="ph-bold ph-x" style="font-size:16px;"></i></button>
+                    </div>
+                    <div class="card-body custom-scrollbar" id="candidate-review-content"
+                        style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:16px; background:#fafafa;">
+                        <!-- details injected here -->
+                    </div>
+                </div>
+            </div>
+
         </div><!-- end relative wrapper -->
     </div>
 
@@ -2000,6 +2032,73 @@ Answer: A</textarea>
         function showFlex(el) { el.style.display = 'flex'; }
         function showBlock(el) { el.style.display = 'block'; }
         function hide(el) { el.style.display = 'none'; }
+
+        function showTopPopup(message) {
+            const container = $('toast-container') || (() => {
+                const c = document.createElement('div');
+                c.id = 'toast-container';
+                c.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; width: 90%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; pointer-events: none;';
+                document.body.appendChild(c);
+                return c;
+            })();
+            
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                background: rgba(15, 23, 42, 0.95);
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(99, 102, 241, 0.3);
+                color: #fff;
+                padding: 16px 20px;
+                border-radius: 12px;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                pointer-events: auto;
+                transform: translateY(-20px);
+                opacity: 0;
+                transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = 'display: flex; align-items: center; gap: 10px; flex: 1;';
+            content.innerHTML = `
+                <div style="background: rgba(99, 102, 241, 0.2); border-radius: 50%; padding: 6px; display: inline-flex;">
+                    <i class="ph-fill ph-bell-ringing" style="color: #818cf8; font-size: 18px;"></i>
+                </div>
+                <div style="font-size: 0.875rem; font-weight: 500; line-height: 1.4;">${message}</div>
+            `;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.style.cssText = 'background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: flex; align-items: center;';
+            closeBtn.innerHTML = '<i class="ph ph-x" style="font-size: 16px;"></i>';
+            closeBtn.onclick = () => {
+                toast.style.transform = 'translateY(-20px) scale(0.95)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            };
+            
+            toast.appendChild(content);
+            toast.appendChild(closeBtn);
+            container.appendChild(toast);
+            
+            // Trigger reflow
+            toast.offsetHeight;
+            
+            // Animate in
+            toast.style.transform = 'translateY(0)';
+            toast.style.opacity = '1';
+            
+            // Auto-remove after 7 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.style.transform = 'translateY(-20px)';
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 7000);
+        }
 
         function parseQuestions(raw) {
             return raw.trim().split(/\n\s*\n/).map(block => {
@@ -2089,6 +2188,8 @@ Answer: A</textarea>
                     btn.className = 'btn-media btn-media-cam off';
                     icon.className = 'ph-bold ph-video-camera-slash';
                     lbl.innerText = 'Camera Off';
+                    $('admin-video').srcObject = null;
+                    showFlex($('video-placeholder'));
                 }
             } else {
                 const btn = $('btn-toggle-mic');
@@ -2118,6 +2219,23 @@ Answer: A</textarea>
                 `Media control: Camera ${adminMedia.video ? 'ENABLED' : 'DISABLED'} · Mic ${adminMedia.audio ? 'ENABLED' : 'DISABLED'}`,
                 adminMedia.video || adminMedia.audio ? 'good' : 'info'
             );
+        }
+
+        function sendAdminMessage() {
+            const input = $('admin-msg-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            if (examChannel) {
+                examChannel.send({
+                    type: 'broadcast',
+                    event: 'admin_message',
+                    payload: { message: msg }
+                });
+                adminLog(`Announcement sent: "${msg}"`, 'info');
+                input.value = '';
+            } else {
+                alert('No active connection to the exam channel.');
+            }
         }
 
         /**
@@ -2214,6 +2332,10 @@ Answer: A</textarea>
         }
 
         function setupAdminPeer() {
+            if (peer) {
+                try { peer.destroy(); } catch (e) { console.error(e); }
+                peer = null;
+            }
             peer = new Peer(`proctor-${activeExamId}`);
             peer.on('open', id => adminLog(`WebRTC proctor node ready · ${id.substring(0, 14)}…`, 'good'));
             peer.on('call', call => {
@@ -2586,6 +2708,41 @@ Answer: A</textarea>
             showFlex($('candidate-score-overlay'));
         }
 
+        function showCandidateReview() {
+            const container = $('candidate-review-content');
+            container.innerHTML = '';
+            
+            parsedExamQuestions.forEach((q, i) => {
+                const cAns = candidateAnswers[i];
+                const isCorrect = (q.ans && cAns === q.ans);
+                const clr = isCorrect ? '#16a34a' : '#dc2626';
+                const bg = isCorrect ? '#f0fdf4' : '#fef2f2';
+                const brd = isCorrect ? '#bbf7d0' : '#fecaca';
+                const icon = isCorrect ? '<i class="ph-bold ph-check-circle" style="color:#16a34a; font-size:16px;"></i>' : '<i class="ph-bold ph-x-circle" style="color:#dc2626; font-size:16px;"></i>';
+
+                container.innerHTML += `
+                    <div style="background:${bg}; border:1px solid ${brd}; border-radius:12px; padding:18px; text-align:left;">
+                        <div style="font-size:0.75rem; font-weight:800; color:${clr}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                            ${icon} Question ${i + 1}
+                        </div>
+                        <div style="font-size:0.95rem; font-weight:700; color:#09090b; margin-bottom:12px; line-height:1.5;">${q.q}</div>
+                        <div style="font-size:0.85rem; color:#4b5563; display:flex; flex-direction:column; gap:6px;">
+                            <div style="background:#fff; border:1px solid #e4e4e7; padding:8px 12px; border-radius:8px;">
+                                <span style="font-weight:700; color:#3f3f46; display:inline-block; width:130px;">Your Answer:</span> 
+                                <span style="${isCorrect ? 'color:#16a34a;font-weight:700;' : 'color:#dc2626;font-weight:700;'}">${cAns || '<span style="color:#a1a1aa;font-style:italic;font-weight:400;">Skipped</span>'}</span>
+                            </div>
+                            ${q.ans ? `
+                            <div style="background:#fff; border:1px solid #e4e4e7; padding:8px 12px; border-radius:8px;">
+                                <span style="font-weight:700; color:#3f3f46; display:inline-block; width:130px;">Correct Answer:</span> 
+                                <span style="color:#16a34a;font-weight:700;">${q.ans}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            showFlex($('candidate-review-modal'));
+        }
+
         function showNoExamScheduled() {
             hide($('candidate-score-overlay'));
             hide($('candidate-content'));
@@ -2622,6 +2779,12 @@ Answer: A</textarea>
                 applyMediaState(video, audio);
             });
 
+            /* Admin sends dynamic announcement text popups */
+            examChannel.on('broadcast', { event: 'admin_message' }, payload => {
+                const { message } = payload.payload;
+                showTopPopup(message);
+            });
+
             examChannel.subscribe();
         }
 
@@ -2630,6 +2793,9 @@ Answer: A</textarea>
          * Guards against calling before peer.on('open') fires (isPeerReady flag).
          */
         function applyMediaState(video, audio) {
+            const camWasOff = !mediaState.video;
+            const camTurningOn = video && camWasOff;
+
             mediaState = { video, audio };
 
             if (!candidateStream) {
@@ -2640,11 +2806,29 @@ Answer: A</textarea>
             candidateStream.getVideoTracks().forEach(t => { t.enabled = !!video; });
             candidateStream.getAudioTracks().forEach(t => { t.enabled = !!audio; });
 
-            // Only call admin PeerJS node if peer is fully open and we haven't called yet
+            // If camera is turning on, force-close existing peerCall to establish a new one
+            if (camTurningOn && peerCall) {
+                try { peerCall.close(); } catch(e) {}
+                peerCall = null;
+            }
+
+            // If camera and mic are both turned off, close the call
+            if (!video && !audio && peerCall) {
+                try { peerCall.close(); } catch(e) {}
+                peerCall = null;
+            }
+
+            // Only call admin PeerJS node if peer is fully open, media is enabled, and we haven't called yet
             if ((video || audio) && !peerCall && isPeerReady) {
                 peerCall = peer.call(`proctor-${activeExamId}`, candidateStream);
                 if (peerCall) {
-                    peerCall.on('error', e => console.error('P2P call error:', e));
+                    peerCall.on('close', () => {
+                        peerCall = null;
+                    });
+                    peerCall.on('error', e => {
+                        console.error('P2P call error:', e);
+                        peerCall = null;
+                    });
                 } else {
                     console.error('PeerJS call returned null — is proctor peer running?');
                 }
@@ -2653,6 +2837,16 @@ Answer: A</textarea>
 
         async function setupCandidateWebcam() {
             try {
+                if (peer) {
+                    try { peer.destroy(); } catch(e) {}
+                    peer = null;
+                    isPeerReady = false;
+                }
+                if (peerCall) {
+                    try { peerCall.close(); } catch(e) {}
+                    peerCall = null;
+                }
+
                 // Always request media for permission prompt, but start with
                 // both tracks DISABLED — admin decides when to enable them.
                 candidateStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
