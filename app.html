@@ -1733,7 +1733,8 @@ Answer: A</textarea>
                             <div class="card-title"><i class="ph ph-chat-centered-text"></i> Send Announcement</div>
                         </div>
                         <div class="card-body" style="display:flex; gap:10px; padding:15px 20px;">
-                            <input type="text" id="admin-msg-input" placeholder="Type message to candidate..." class="input" style="flex:1;">
+                            <input type="text" id="admin-msg-input" placeholder="Type message to candidate..."
+                                class="input" style="flex:1;">
                             <button onclick="sendAdminMessage()" class="btn btn-indigo" style="white-space:nowrap;">
                                 <i class="ph-bold ph-paper-plane-tilt"></i> Send
                             </button>
@@ -1759,7 +1760,8 @@ Answer: A</textarea>
         </main>
 
         <!-- Admin Question Details Modal -->
-        <div id="admin-question-modal" class="violation-popup" style="display:none; z-index:9999; padding:20px; position:fixed; inset:0;">
+        <div id="admin-question-modal" class="violation-popup"
+            style="display:none; z-index:9999; padding:20px; position:fixed; inset:0;">
             <div class="card"
                 style="width:100%; max-width:500px; animation:logIn .2s ease-out; box-shadow:0 20px 40px rgba(0,0,0,0.3);">
                 <div class="card-hd" style="background:#f8fafc;">
@@ -1878,8 +1880,7 @@ Answer: A</textarea>
                         style="justify-content:center; opacity:0.6;" disabled>
                         Start Exam
                     </button>
-                    <p style="font-size:0.7rem; color:#a1a1aa; margin-top:12px;">Time is synchronized with global
-                        servers. Changing your device clock will not bypass this wait.</p>
+                    <p style="font-size:0.7rem; color:#a1a1aa; margin-top:12px;"></p>
                 </div>
             </div>
 
@@ -1946,7 +1947,8 @@ Answer: A</textarea>
                         <div class="score-num" id="candidate-score-display">0%</div>
                     </div>
                     <button id="btn-candidate-review" onclick="showCandidateReview()" class="btn btn-indigo w100"
-                        style="justify-content:center; margin-bottom:10px;"><i class="ph-bold ph-magnifying-glass"></i> Review Answers</button>
+                        style="justify-content:center; margin-bottom:10px;"><i class="ph-bold ph-magnifying-glass"></i>
+                        Review Answers</button>
                     <button onclick="showNoExamScheduled()" class="btn btn-ghost w100"
                         style="justify-content:center;">Return Home</button>
                 </div>
@@ -1990,8 +1992,8 @@ Answer: A</textarea>
                     <div class="card-hd" style="background:#f8fafc;">
                         <div class="card-title" style="font-size:1rem;"><i class="ph-fill ph-check-square-offset"
                                 style="color:#6366f1; font-size:20px;"></i> Exam Performance Review</div>
-                        <button onclick="hide($('candidate-review-modal'))" class="btn btn-ghost" style="padding:6px;"><i
-                                class="ph-bold ph-x" style="font-size:16px;"></i></button>
+                        <button onclick="hide($('candidate-review-modal'))" class="btn btn-ghost"
+                            style="padding:6px;"><i class="ph-bold ph-x" style="font-size:16px;"></i></button>
                     </div>
                     <div class="card-body custom-scrollbar" id="candidate-review-content"
                         style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:16px; background:#fafafa;">
@@ -2041,7 +2043,7 @@ Answer: A</textarea>
                 document.body.appendChild(c);
                 return c;
             })();
-            
+
             const toast = document.createElement('div');
             toast.style.cssText = `
                 background: rgba(15, 23, 42, 0.95);
@@ -2060,7 +2062,7 @@ Answer: A</textarea>
                 opacity: 0;
                 transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             `;
-            
+
             const content = document.createElement('div');
             content.style.cssText = 'display: flex; align-items: center; gap: 10px; flex: 1;';
             content.innerHTML = `
@@ -2069,7 +2071,7 @@ Answer: A</textarea>
                 </div>
                 <div style="font-size: 0.875rem; font-weight: 500; line-height: 1.4;">${message}</div>
             `;
-            
+
             const closeBtn = document.createElement('button');
             closeBtn.style.cssText = 'background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 4px; display: flex; align-items: center;';
             closeBtn.innerHTML = '<i class="ph ph-x" style="font-size: 16px;"></i>';
@@ -2078,18 +2080,18 @@ Answer: A</textarea>
                 toast.style.opacity = '0';
                 setTimeout(() => toast.remove(), 300);
             };
-            
+
             toast.appendChild(content);
             toast.appendChild(closeBtn);
             container.appendChild(toast);
-            
+
             // Trigger reflow
             toast.offsetHeight;
-            
+
             // Animate in
             toast.style.transform = 'translateY(0)';
             toast.style.opacity = '1';
-            
+
             // Auto-remove after 7 seconds
             setTimeout(() => {
                 if (toast.parentNode) {
@@ -2134,7 +2136,7 @@ Answer: A</textarea>
                 g.appendChild(c);
             }
         }
-        
+
         function showQuestionDetails(idx) {
             const q = adminParsedQuestions[idx];
             if (!q) {
@@ -2711,7 +2713,7 @@ Answer: A</textarea>
         function showCandidateReview() {
             const container = $('candidate-review-content');
             container.innerHTML = '';
-            
+
             parsedExamQuestions.forEach((q, i) => {
                 const cAns = candidateAnswers[i];
                 const isCorrect = (q.ans && cAns === q.ans);
@@ -2808,13 +2810,13 @@ Answer: A</textarea>
 
             // If camera is turning on, force-close existing peerCall to establish a new one
             if (camTurningOn && peerCall) {
-                try { peerCall.close(); } catch(e) {}
+                try { peerCall.close(); } catch (e) { }
                 peerCall = null;
             }
 
             // If camera and mic are both turned off, close the call
             if (!video && !audio && peerCall) {
-                try { peerCall.close(); } catch(e) {}
+                try { peerCall.close(); } catch (e) { }
                 peerCall = null;
             }
 
@@ -2838,12 +2840,12 @@ Answer: A</textarea>
         async function setupCandidateWebcam() {
             try {
                 if (peer) {
-                    try { peer.destroy(); } catch(e) {}
+                    try { peer.destroy(); } catch (e) { }
                     peer = null;
                     isPeerReady = false;
                 }
                 if (peerCall) {
-                    try { peerCall.close(); } catch(e) {}
+                    try { peerCall.close(); } catch (e) { }
                     peerCall = null;
                 }
 
