@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Exam {
+  id                 String             @id @default(uuid())
+  title              String
+  accessCode         String             @unique
+  durationMinutes    Int                @default(60)
+  scheduledStartTime DateTime?
+  status             String             @default("ACTIVE") // DRAFT, SCHEDULED, ACTIVE, COMPLETED, ARCHIVED
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  questions          Question[]
+  sessions           CandidateSession[]
+
+  @@index([accessCode])
+  @@index([status])
+}
+
+model Question {
+  id                 String             @id @default(uuid())
+  examId             String
+  exam               Exam               @relation(fields: [examId], references: [id], onDelete: Cascade)
+  orderIndex         Int
+  prompt             String
+  options            String             // JSON-serialized array of strings: '["Option A", "Option B", ...]'
+  correctOptionIndex Int?               // Confidential: filtered out when sent to candidates
+  points             Int                @default(1)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  answers            CandidateAnswer[]
+
+  @@index([examId, orderIndex])
+}
+
+model CandidateSession {
+  id                 String             @id @default(uuid())
+  examId             String
+  exam               Exam               @relation(fields: [examId], references: [id], onDelete: Cascade)
+  candidateName      String
+  candidateEmail     String?
+  peerId             String?            // WebRTC peer identifier
+  status             String             @default("WAITING") // WAITING, IN_PROGRESS, SUBMITTED, DISQUALIFIED
+  startedAt          DateTime?
+  submittedAt        DateTime?
+  score              Float?
+  totalQuestions     Int                @default(0)
+  correctAnswers     Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  answers            CandidateAnswer[]
+  violations         ViolationLog[]
+
+  @@index([examId])
+  @@index([status])
+}
+
+model CandidateAnswer {
+  id                  String           @id @default(uuid())
+  sessionId           String
+  session             CandidateSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId          String
+  question            Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptionIndex Int?
+  isCorrect           Boolean?
+  answeredAt          DateTime         @default(now())
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+}
+
+model ViolationLog {
+  id            String           @id @default(uuid())
+  sessionId     String
+  session       CandidateSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  violationType String           // TAB_SWITCH, WINDOW_BLUR, MULTIPLE_PEOPLE, CAMERA_MUTED, FULLSCREEN_EXIT
+  severity      String           @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  timestamp     DateTime         @default(now())
+  details       String?          // JSON or metadata string
+
+  @@index([sessionId, timestamp])
+  @@index([violationType])
+}
+
