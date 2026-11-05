@@ -1536,7 +1536,7 @@ B) &lt;js&gt;
 C) &lt;code&gt;
 Answer: A</textarea>
                         </div>
-                        <button onclick="startAdminExam()" class="btn btn-green" style="align-self:flex-start;">
+                        <button id="btn-process-exam" onclick="startAdminExam()" class="btn btn-green" style="align-self:flex-start;">
                             <i class="ph-bold ph-link" style="font-size:14px;"></i> Process &amp; Generate Room
                         </button>
                     </div>
@@ -1758,6 +1758,37 @@ Answer: A</textarea>
                 </div>
             </div>
         </main>
+
+        <!-- Admin Room Generation Loading Modal -->
+        <div id="admin-room-loading-modal" class="violation-popup"
+            style="display:none; z-index:99999; padding:20px; position:fixed; inset:0; background:rgba(15, 23, 42, 0.72); backdrop-filter:blur(6px);">
+            <div class="card"
+                style="width:100%; max-width:440px; text-align:center; padding:36px 28px; animation:logIn .25s cubic-bezier(0.16, 1, 0.3, 1); box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.45); border:1px solid #e2e8f0; border-radius:20px; background:#ffffff;">
+                <div class="loader-wrap" style="background:#ecfdf5; margin:0 auto 20px auto; width:68px; height:68px; display:flex; align-items:center; justify-content:center; border-radius:50%; box-shadow:0 0 0 8px rgba(34, 197, 94, 0.1);">
+                    <i id="room-loading-spinner-icon" class="ph ph-circle-notch anim-spin" style="font-size:34px; color:#16a34a;"></i>
+                </div>
+                <h3 id="room-loading-title" style="font-size:1.25rem; font-weight:800; color:#0f172a; margin-bottom:8px; letter-spacing:-0.02em;">
+                    Generating Proctor Room
+                </h3>
+                <p id="room-loading-subtitle" style="font-size:0.875rem; color:#64748b; line-height:1.55; margin-bottom:22px;">
+                    Parsing assessment questions, provisioning room records, and preparing live proctoring channel...
+                </p>
+                <div style="display:flex; flex-direction:column; gap:10px; text-align:left; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 16px;">
+                    <div id="step-parse" class="row gap2" style="font-size:0.8125rem; font-weight:600; color:#16a34a;">
+                        <i class="ph-fill ph-check-circle" style="font-size:16px;"></i>
+                        <span>Parsed question blocks &amp; scoring matrix</span>
+                    </div>
+                    <div id="step-room" class="row gap2" style="font-size:0.8125rem; font-weight:600; color:#2563eb;">
+                        <i id="step-room-icon" class="ph ph-circle-notch anim-spin" style="font-size:16px;"></i>
+                        <span id="step-room-text">Provisioning room &amp; session tokens...</span>
+                    </div>
+                    <div id="step-channel" class="row gap2" style="font-size:0.8125rem; font-weight:500; color:#94a3b8;">
+                        <i id="step-channel-icon" class="ph ph-circle" style="font-size:16px;"></i>
+                        <span id="step-channel-text">Establishing peer signaling channel</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Admin Question Details Modal -->
         <div id="admin-question-modal" class="violation-popup"
@@ -2282,17 +2313,55 @@ Answer: A</textarea>
 
 
         async function startAdminExam() {
+            const btn = $('btn-process-exam');
+            const modal = $('admin-room-loading-modal');
+            const originalBtnHtml = btn ? btn.innerHTML : '';
+
             try {
                 const duration = parseInt($('exam-duration').value) || 60;
-                const rawText = $('raw-text').value;
+                const rawText = ($('raw-text').value || '').trim();
+
+                if (!rawText) {
+                    showTopPopup('Please enter assessment questions before generating a room.');
+                    $('raw-text').focus();
+                    return;
+                }
+
                 const parsed = parseQuestions(rawText);
+                if (!parsed || parsed.length === 0) {
+                    showTopPopup('No valid questions found. Please check question and option formatting.');
+                    return;
+                }
+
                 const schedVal = $('exam-scheduled-time').value;
                 let scheduledFor = null;
                 if (schedVal) {
                     scheduledFor = new Date(schedVal).toISOString();
                 }
 
-                if (!supabaseClient) { alert('Supabase not initialised.'); return; }
+                if (!supabaseClient) {
+                    alert('Supabase client is not initialised.');
+                    return;
+                }
+
+                // Activate button loading state
+                if (btn) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.7';
+                    btn.style.cursor = 'not-allowed';
+                    btn.innerHTML = '<i class="ph ph-circle-notch anim-spin" style="font-size:14px;"></i> Generating Room...';
+                }
+
+                // Reset loading modal to initial processing state
+                $('room-loading-title').innerText = 'Generating Proctor Room';
+                $('room-loading-subtitle').innerText = 'Parsing assessment questions, provisioning room records, and preparing live proctoring channel...';
+                $('step-room-icon').className = 'ph ph-circle-notch anim-spin';
+                $('step-room').style.color = '#2563eb';
+                $('step-room-text').innerText = 'Provisioning room & session tokens...';
+                $('step-channel-icon').className = 'ph ph-circle';
+                $('step-channel').style.color = '#94a3b8';
+                $('step-channel-text').innerText = 'Establishing peer signaling channel';
+                showFlex(modal);
 
                 const { data, error } = await supabaseClient
                     .from('exams')
@@ -2305,9 +2374,24 @@ Answer: A</textarea>
                     }])
                     .select();
 
-                if (error) { console.error('Database Error:', error); alert('Supabase Error: ' + error.message); return; }
+                if (error) {
+                    console.error('Database Error:', error);
+                    hide(modal);
+                    alert('Supabase Error: ' + error.message);
+                    return;
+                }
 
                 if (data && data.length > 0) {
+                    // Update step 2 to complete
+                    $('step-room-icon').className = 'ph-fill ph-check-circle';
+                    $('step-room').style.color = '#16a34a';
+                    $('step-room-text').innerText = 'Room record created successfully';
+
+                    // Update step 3 to active
+                    $('step-channel-icon').className = 'ph ph-circle-notch anim-spin';
+                    $('step-channel').style.color = '#2563eb';
+                    $('step-channel-text').innerText = 'Initializing WebRTC & real-time channel...';
+
                     activeExamId = data[0].id;
                     adminParsedQuestions = parsed;
                     const candidateLink = `${location.origin}${location.pathname}?role=candidate&id=${activeExamId}`;
@@ -2318,8 +2402,32 @@ Answer: A</textarea>
                     buildQGrid(parsed.length);
                     setupAdminPeer();
                     setupAdminChannel();
+
+                    // Step 3 complete
+                    $('step-channel-icon').className = 'ph-fill ph-check-circle';
+                    $('step-channel').style.color = '#16a34a';
+                    $('step-channel-text').innerText = 'Proctor channel live and ready';
+                    $('room-loading-title').innerText = 'Room Ready!';
+                    $('room-loading-subtitle').innerText = 'Your proctor room and candidate links have been generated.';
+
+                    // Brief pause for visual confirmation
+                    await new Promise(r => setTimeout(r, 650));
+                    hide(modal);
+                    $('share-link-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    showTopPopup('Exam room generated successfully! Candidate and admin links are ready.');
                 }
-            } catch (err) { console.error('Database Error:', err); alert('Critical error. See console.'); }
+            } catch (err) {
+                console.error('Database Error:', err);
+                hide(modal);
+                alert('Critical error. See console.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                    btn.innerHTML = originalBtnHtml;
+                }
+            }
         }
 
         function copyAdminLink() { const e = $('shareable-url'); e.select(); document.execCommand('copy'); }
